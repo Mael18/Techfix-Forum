@@ -1,0 +1,672 @@
+<!-- VERSION: v1.5 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TechFix Forum | Cellphone Repair Community</title>
+    <style>
+        :root {
+            --primary: #10b981;     /* Vibrant Green */
+            --secondary: #2563eb;   /* Modern Blue */
+            --bg-color: #0f172a;    /* Deep Slate Dark */
+            --card-bg: #1e293b;     
+            --nav-bg: rgba(30, 41, 59, 0.95);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(148, 163, 184, 0.15);
+            --radius-md: 12px;
+        }
+
+        /* Role Colors */
+        .role-new { color: #34d399 !important; }        /* Green */
+        .role-member { color: #38bdf8 !important; }     /* Blue */
+        .role-elite { color: #c084fc !important; }      /* Violet */
+        .role-contributor { color: #facc15 !important; }/* Gold */
+        .role-admin { color: #f87171 !important; }      /* Red */
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+        nav { background: var(--nav-bg); padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .nav-left, .nav-right { display: flex; align-items: center; gap: 14px; }
+        .hamburger { font-size: 1.4rem; color: var(--text-main); cursor: pointer; background: none; border: none; }
+        .logo { font-size: 1.25rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .nav-icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; position: relative; color: var(--text-main); padding: 4px; }
+        .badge-count { position: absolute; top: -2px; right: -4px; background: #ef4444; color: white; font-size: 0.65rem; padding: 2px 5px; border-radius: 10px; font-weight: bold; }
+
+        .auth-controls button { background: linear-gradient(135deg, var(--secondary), var(--primary)); color: white; border: none; padding: 8px 16px; border-radius: 50px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+        .user-menu-trigger { cursor: pointer; background: rgba(255,255,255,0.08); padding: 6px 12px; border-radius: 50px; font-weight: 600; border: 1px solid var(--border); }
+
+        /* Side Nav (Reference Style) */
+        .side-nav { position: fixed; top: 0; left: -100%; width: 300px; height: 100%; background-color: var(--card-bg); z-index: 150; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; overflow-y: auto; border-right: 1px solid var(--border); }
+        .side-nav.active { left: 0; }
+        .side-nav-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 140; backdrop-filter: blur(3px); }
+        .side-nav-overlay.active { display: block; }
+        .side-nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .side-nav-close { background: none; border: none; font-size: 1.5rem; color: white; cursor: pointer; }
+        
+        .menu-dropdown-header { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; background: rgba(255,255,255,0.03); margin-top: 8px; }
+        .menu-dropdown-header:hover { background: rgba(255,255,255,0.06); }
+        .menu-sub-items { padding-left: 15px; display: flex; flex-direction: column; gap: 4px; margin-top: 5px; }
+        .side-nav-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; color: var(--text-muted); font-size: 0.95rem; }
+        .side-nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+
+        .container { max-width: 950px; margin: 0 auto; padding: 20px; flex: 1; width: 100%; display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
+        @media(max-width: 768px) { .container { display: flex; flex-direction: column; padding: 12px; } }
+
+        .main-feed { display: flex; flex-direction: column; gap: 15px; }
+        .sidebar-panel { display: flex; flex-direction: column; gap: 15px; }
+
+        .toolbar { display: flex; gap: 10px; margin-bottom: 5px; }
+        .search-bar { flex: 1; padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--card-bg); color: white; outline: none; }
+        .btn-post { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 10px 20px; border-radius: var(--radius-md); font-weight: bold; border: none; cursor: pointer; white-space: nowrap; }
+
+        #thread-list { display: flex; flex-direction: column; gap: 15px; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border); position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .card-title { font-size: 1.15rem; margin-bottom: 8px; font-weight: 700; }
+        .card-body { color: var(--text-muted); line-height: 1.6; margin-bottom: 15px; font-size: 0.95rem; }
+        .card-footer { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 10px; align-items: center; }
+        
+        /* Custom Inline Spoiler / Reaction tags */
+        .inline-hidden { background: rgba(0,0,0,0.6); border: 1px dashed var(--secondary); padding: 2px 8px; border-radius: 4px; color: #38bdf8; cursor: pointer; display: inline-block; font-weight: 600; font-size: 0.85rem; }
+        .inline-hidden.revealed { background: rgba(37, 99, 235, 0.15); color: #fff; border-style: solid; }
+
+        .btn-react { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .btn-react.reacted { background: var(--primary); color: white; }
+        .btn-edit { background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; margin-left: 6px; }
+
+        /* Widgets (Shoutbox & Online) */
+        .widget-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 15px; }
+        .widget-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 10px; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .shoutbox-messages { height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; font-size: 0.85rem; padding-right: 4px; }
+        .shout-msg { background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 6px; line-height: 1.4; }
+        .shout-input-area { display: flex; gap: 6px; }
+        .shout-input-area input { flex: 1; background: var(--bg-color); border: 1px solid var(--border); padding: 8px; border-radius: 6px; color: white; font-size: 0.85rem; outline: none; }
+        .shout-input-area button { background: var(--secondary); color: white; border: none; padding: 0 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        .online-users-list { display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto; font-size: 0.85rem; }
+        .online-user-tag { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); align-items: center; justify-content: center; z-index: 200; padding: 15px; overflow-y: auto; backdrop-filter: blur(4px); }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 450px; padding: 22px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 12px; margin: auto; border: 1px solid var(--border); }
+        .modal-header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 2px; align-items: center; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; color: white; cursor: pointer; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 8px; margin-top: 5px; outline: none; font-size: 0.95rem; }
+        .btn-submit { background: linear-gradient(135deg, var(--secondary), var(--primary)); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
+
+        /* User Hover/Tap Profile Popover Card */
+        .profile-popover { position: fixed; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 15px; width: 260px; z-index: 300; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; text-align: center; }
+        .profile-popover.active { display: block; }
+
+        .clickable-username { cursor: pointer; font-weight: 700; transition: opacity 0.2s; }
+        .clickable-username:hover { opacity: 0.8; text-decoration: underline; }
+
+        footer { text-align: center; padding: 25px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: auto; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-left">
+            <button class="hamburger" onclick="toggleSideNav()">☰</button>
+            <div class="logo">TechFix</div>
+        </div>
+        <div class="nav-right">
+            <button class="nav-icon-btn" onclick="openNotifications()" title="Notifications">🔔<span class="badge-count" id="notifBadge">0</span></button>
+            <button class="nav-icon-btn" onclick="openMessages()" title="Messages">💬<span class="badge-count" id="msgBadge">0</span></button>
+            <div id="auth-controls"></div>
+        </div>
+    </nav>
+
+    <!-- Side Navigation (Reference Layout) -->
+    <div class="side-nav" id="sideNav">
+        <div class="side-nav-header">
+            <div class="logo">Menu</div>
+            <button class="side-nav-close" onclick="toggleSideNav()">&times;</button>
+        </div>
+        
+        <div class="menu-dropdown-header" onclick="toggleSubMenu('forumSub')">
+            <span>💬 Forums</span> <span>▾</span>
+        </div>
+        <div class="menu-sub-items" id="forumSub">
+            <div class="side-nav-item" onclick="filterFeed('all'); toggleSideNav()">🏠 New posts</div>
+            <div class="side-nav-item" onclick="filterFeed('find'); toggleSideNav()">🔍 Find threads</div>
+            <div class="side-nav-item" onclick="filterFeed('mine'); toggleSideNav()">📌 Your threads</div>
+            <div class="side-nav-item" onclick="filterFeed('participated'); toggleSideNav()">✍️ Threads with your posts</div>
+            <div class="side-nav-item" onclick="filterFeed('unanswered'); toggleSideNav()">❓ Unanswered threads</div>
+        </div>
+
+        <div class="menu-dropdown-header" onclick="toggleSubMenu('watchedSub')">
+            <span>👁️ Watched</span> <span>▾</span>
+        </div>
+        <div class="menu-sub-items" id="watchedSub" style="display:none;">
+            <div class="side-nav-item" onclick="alert('Watched threads feature active'); toggleSideNav()">⭐ Watched threads</div>
+            <div class="side-nav-item" onclick="alert('Watched forums feature active'); toggleSideNav()">📂 Watched forums</div>
+            <div class="side-nav-item" onclick="alert('All marked as read'); toggleSideNav()">✔️ Mark forums read</div>
+        </div>
+
+        <div class="menu-dropdown-header" onclick="alert('Shop module coming soon!'); toggleSideNav()">
+            <span>🛒 Shop</span>
+        </div>
+
+        <div id="adminPanelNav" style="display:none; margin-top:15px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--primary); font-weight: 800; margin-bottom:5px;">Admin</div>
+            <div class="side-nav-item role-admin" onclick="openAdminPanel()">⚙️ Admin Control Panel</div>
+        </div>
+    </div>
+    <div class="side-nav-overlay" id="sideNavOverlay" onclick="toggleSideNav()"></div>
+
+    <!-- Main App Container -->
+    <div class="container">
+        <div class="main-feed">
+            <div class="toolbar">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search discussions..." onkeyup="renderThreads()">
+                <button class="btn-post" onclick="openNewThread()">+ Post</button>
+            </div>
+            <div id="thread-list">
+                <div style="text-align:center; color:gray; padding:20px;">Loading discussions...</div>
+            </div>
+        </div>
+
+        <!-- Sidebar Widgets -->
+        <div class="sidebar-panel">
+            <div class="widget-box">
+                <div class="widget-title">🗣️ Live Shoutbox</div>
+                <div class="shoutbox-messages" id="shoutboxMsgs">
+                    <div style="color:gray; font-size:0.8rem; text-align:center;">Connecting to chat...</div>
+                </div>
+                <div class="shout-input-area">
+                    <input type="text" id="shoutInput" placeholder="Say something..." onkeypress="if(event.key==='Enter')sendShout()">
+                    <button onclick="sendShout()">Send</button>
+                </div>
+            </div>
+
+            <div class="widget-box">
+                <div class="widget-title">🟢 Online Members <span id="onlineCountBadge" style="background:var(--primary); color:white; padding:1px 6px; border-radius:10px; font-size:0.75rem;">0</span></div>
+                <div class="online-users-list" id="onlineUsersList">
+                    <div style="color:gray; font-size:0.8rem;">Loading users...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>Made By Ismael Manongdo</footer>
+
+    <!-- User Profile Popup Card (Hover/Tap) -->
+    <div class="profile-popover" id="userPopover">
+        <div style="font-weight:800; font-size:1.1rem; margin-bottom:4px;" id="popUserTitle">@username</div>
+        <div style="font-size:0.75rem; text-transform:uppercase; font-weight:700; margin-bottom:10px;" id="popUserRole">Member</div>
+        <div style="display:flex; justify-content:space-around; font-size:0.8rem; border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:8px 0; margin-bottom:10px;">
+            <div><b id="popPosts" style="display:block;">0</b>Posts</div>
+            <div><b id="popReactions" style="display:block;">0</b>Reactions</div>
+            <div><b id="popPoints" style="display:block;">0</b>Points</div>
+        </div>
+        <button class="btn-submit" style="padding:6px; font-size:0.8rem;" onclick="closeProfilePopover()">Close</button>
+    </div>
+
+    <!-- Auth Modals -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="authTitle">Log In</h2>
+                <button class="modal-close" onclick="closeModals()">&times;</button>
+            </div>
+            <div class="form-group"><input type="email" id="authEmail" placeholder="Email Address"></div>
+            <div class="form-group" id="usernameGroup" style="display:none;"><input type="text" id="authUser" placeholder="Display Name (Username)"></div>
+            <div class="form-group" id="passwordGroup"><input type="password" id="authPass" placeholder="Password"></div>
+            
+            <button class="btn-submit" onclick="submitAuth()" id="authBtn">Log In</button>
+            <button class="btn-submit" style="background:#334155; font-size:0.85rem;" onclick="initializeAdmin()">Initialize Admin Account</button>
+            
+            <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:0.85rem;">
+                <a href="#" style="color:var(--text-muted);" onclick="openForgotPassword()">Forgot Password?</a>
+                <a href="#" style="color:var(--primary);" onclick="toggleAuthMode()">Switch to Register/Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal" onclick="if(event.target===this)closeModals()">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-header">
+                <h2>My Account Profile</h2>
+                <button class="modal-close" onclick="closeModals()">&times;</button>
+            </div>
+            <div style="text-align:center; padding:10px 0; border-bottom:1px solid var(--border); margin-bottom:10px;">
+                <div id="upcName" style="font-size:1.2rem; font-weight:800;"></div>
+                <div id="upcRole" style="font-size:0.8rem; font-weight:700; text-transform:uppercase; margin-bottom:8px;"></div>
+                <div style="display:flex; justify-content:space-around; font-size:0.85rem;">
+                    <div><b id="statPosts">0</b>Posts</div>
+                    <div><b id="statReacts">0</b>Reactions</div>
+                    <div><b id="statPoints">0</b>Points</div>
+                </div>
+            </div>
+            <div style="font-size:0.8rem; text-transform:uppercase; color:var(--primary); font-weight:800;">Security Settings</div>
+            <div class="form-group" style="margin-top:2px;">
+                <label style="font-size:0.8rem; color:var(--text-muted);">Change Username</label>
+                <input type="text" id="newUsernameInput" placeholder="New username">
+                <button class="btn-submit" style="padding:6px; font-size:0.85rem; margin-top:4px;" onclick="updateUsername()">Update Username</button>
+            </div>
+            <div class="form-group" style="margin-top:5px;">
+                <label style="font-size:0.8rem; color:var(--text-muted);">Change Password</label>
+                <input type="password" id="newPasswordInput" placeholder="New password (min 6 chars)">
+                <button class="btn-submit" style="padding:6px; font-size:0.85rem; margin-top:4px; background:#2563eb;" onclick="updatePassword()">Update Password</button>
+            </div>
+            <button class="btn-submit" style="background:#ef4444; margin-top:15px;" onclick="logout()">Log Out</button>
+        </div>
+    </div>
+
+    <!-- Thread Creator/Editor -->
+    <div class="modal" id="threadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="threadModalTitle">Create Thread</h2>
+                <button class="modal-close" onclick="closeModals()">&times;</button>
+            </div>
+            <input type="hidden" id="editThreadId" value="">
+            <div class="form-group"><input type="text" id="postTitle" placeholder="Title"></div>
+            <div class="form-group">
+                <textarea id="postContent" placeholder="Content... Use [spoiler]secret text[/spoiler] or [react]reaction required text[/react]" rows="6"></textarea>
+            </div>
+            <button class="btn-submit" onclick="submitThread()">Save Thread</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="modal" id="adminModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Admin Control Panel</h2>
+                <button class="modal-close" onclick="closeModals()">&times;</button>
+            </div>
+            <div id="adminUserList" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- FIREBASE SCRIPTS -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEAFqROiqVnWgugCLUad_IuCjsz5Wd38w",
+            authDomain: "techfix-app-c8792.firebaseapp.com",
+            projectId: "techfix-app-c8792",
+            storageBucket: "techfix-app-c8792.firebasestorage.app",
+            messagingSenderId: "108014501959",
+            appId: "1:108014501959:web:1a07257f16030d77513162"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        let currentUser = localStorage.getItem('techfix_user') || null;
+        let usersDB = {};
+        let threads = [];
+        let currentFeedFilter = 'all';
+
+        // Listeners for Realtime Sync
+        db.collection("users").onSnapshot((snapshot) => {
+            usersDB = {};
+            snapshot.forEach((doc) => { usersDB[doc.id] = doc.data(); });
+            updateAuthUI();
+            renderOnlineUsers();
+            if(document.getElementById('adminModal').classList.contains('active')) openAdminPanel();
+            if(threads.length > 0) renderThreads();
+        });
+
+        db.collection("threads").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+            threads = [];
+            snapshot.forEach((doc) => { threads.push({ id: doc.id, ...doc.data() }); });
+            renderThreads();
+        });
+
+        db.collection("shoutbox").orderBy("timestamp", "asc").limit(50).onSnapshot((snapshot) => {
+            const shoutBox = document.getElementById('shoutboxMsgs');
+            if(!shoutBox) return;
+            shoutBox.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const s = doc.data();
+                shoutBox.innerHTML += `<div class="shout-msg"><span class="clickable-username role-${usersDB[s.author]?.role||'new'}" onclick="showUserProfile('${s.author}', event)">@${s.author}</span>: ${s.message}</div>`;
+            });
+            shoutBox.scrollTop = shoutBox.scrollHeight;
+        });
+
+        const roleConfig = {
+            'new': { title: 'New', class: 'role-new' },
+            'member': { title: 'Member', class: 'role-member' },
+            'elite': { title: 'Elite', class: 'role-elite' },
+            'contributor': { title: 'Contributor', class: 'role-contributor' },
+            'admin': { title: 'Administrator', class: 'role-admin' }
+        };
+
+        function getUser(username) { return usersDB[username] || { role: 'new', posts: 0, reactions: 0, points: 0, isLimited: false }; }
+        function hasPerms(role, requiredLevel) {
+            const levels = ['new', 'member', 'elite', 'contributor', 'admin'];
+            return levels.indexOf(role) >= levels.indexOf(requiredLevel);
+        }
+
+        function toggleSideNav() {
+            document.getElementById('sideNav').classList.toggle('active');
+            document.getElementById('sideNavOverlay').classList.toggle('active');
+        }
+        function toggleSubMenu(id) {
+            const el = document.getElementById(id);
+            el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+        }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
+
+        let isLoginMode = true;
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').innerText = isLoginMode ? 'Log In' : 'Register';
+            document.getElementById('authBtn').innerText = isLoginMode ? 'Log In' : 'Register Account';
+            document.getElementById('usernameGroup').style.display = isLoginMode ? 'none' : 'block';
+        }
+        
+        function openAuth() { closeModals(); document.getElementById('authModal').classList.add('active'); }
+        function openNotifications() { alert("No new notifications."); }
+        function openMessages() { alert("No new private messages."); }
+        
+        function openForgotPassword() {
+            const email = prompt("Enter your account email address for password recovery:");
+            if(!email) return;
+            auth.sendPasswordResetEmail(email.trim()).then(() => alert("Password reset email sent!")).catch(e => alert("Error: " + e.message));
+        }
+
+        async function initializeAdmin() {
+            try {
+                await auth.createUserWithEmailAndPassword("admin@techfix.com", "admin123");
+                await db.collection("users").doc("admin").set({ email: "admin@techfix.com", role: 'admin', posts: 0, reactions: 0, points: 0, isLimited: false });
+                alert("Admin account initialized! Use email 'admin@techfix.com' and password 'admin123'");
+            } catch(e) {
+                if(e.code === 'auth/email-already-in-use') alert("Admin account already active. Log in directly.");
+                else alert("Error: " + e.message);
+            }
+        }
+
+        async function submitAuth() {
+            const email = document.getElementById('authEmail').value.trim();
+            const pass = document.getElementById('authPass').value;
+            const user = document.getElementById('authUser').value.trim().toLowerCase();
+
+            if(!email || !pass) return alert('Enter email and password.');
+            if(!isLoginMode && !user) return alert('Choose a username.');
+
+            try {
+                if (isLoginMode) {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                    const snapshot = await db.collection("users").where("email", "==", email).get();
+                    currentUser = !snapshot.empty ? snapshot.docs[0].id : (email === "admin@techfix.com" ? "admin" : email.split('@')[0]);
+                } else {
+                    const doc = await db.collection("users").doc(user).get();
+                    if(doc.exists) return alert('Username already taken.');
+                    await auth.createUserWithEmailAndPassword(email, pass);
+                    await db.collection("users").doc(user).set({ email: email, role: 'new', posts: 0, reactions: 0, points: 0, isLimited: false });
+                    currentUser = user;
+                    alert('Registered successfully!');
+                }
+                localStorage.setItem('techfix_user', currentUser);
+                closeModals(); updateAuthUI(); renderThreads();
+            } catch(error) { alert("Error: " + error.message); }
+        }
+
+        async function logout() {
+            await auth.signOut();
+            currentUser = null; localStorage.removeItem('techfix_user');
+            closeModals(); updateAuthUI(); renderThreads();
+        }
+
+        function updateAuthUI() {
+            const authDiv = document.getElementById('auth-controls');
+            const adminNav = document.getElementById('adminPanelNav');
+            adminNav.style.display = 'none';
+
+            if(currentUser && usersDB[currentUser]) {
+                const u = getUser(currentUser);
+                const rConf = roleConfig[u.role] || roleConfig['new'];
+                authDiv.innerHTML = `<div class="user-menu-trigger ${rConf.class}" onclick="openProfile()">@${currentUser}</div>`;
+                if(u.role === 'admin') adminNav.style.display = 'block';
+            } else {
+                authDiv.innerHTML = `<button onclick="openAuth()">Log In</button>`;
+            }
+        }
+
+        function openProfile() {
+            if(!currentUser) return;
+            const u = getUser(currentUser);
+            const rConf = roleConfig[u.role] || roleConfig['new'];
+            document.getElementById('upcName').className = `upc-name ${rConf.class}`;
+            document.getElementById('upcName').innerText = currentUser;
+            document.getElementById('upcRole').innerText = rConf.title;
+            document.getElementById('statPosts').innerText = u.posts || 0;
+            document.getElementById('statReacts').innerText = u.reactions || 0;
+            document.getElementById('statPoints').innerText = u.points || 0;
+            document.getElementById('newUsernameInput').value = currentUser;
+            closeModals();
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        function showUserProfile(username, event) {
+            event.stopPropagation();
+            const u = getUser(username);
+            const rConf = roleConfig[u.role] || roleConfig['new'];
+            const pop = document.getElementById('userPopover');
+            
+            document.getElementById('popUserTitle').className = `clickable-username ${rConf.class}`;
+            document.getElementById('popUserTitle').innerText = `@${username}`;
+            document.getElementById('popUserRole').innerText = rConf.title;
+            document.getElementById('popPosts').innerText = u.posts || 0;
+            document.getElementById('popReactions').innerText = u.reactions || 0;
+            document.getElementById('popPoints').innerText = u.points || 0;
+
+            pop.style.top = Math.min(event.clientY + 10, window.innerHeight - 200) + 'px';
+            pop.style.left = Math.min(event.clientX - 130, window.innerWidth - 280) + 'px';
+            pop.classList.add('active');
+        }
+        function closeProfilePopover() { document.getElementById('userPopover').classList.remove('active'); }
+
+        async function updateUsername() {
+            const newName = document.getElementById('newUsernameInput').value.trim().toLowerCase();
+            if(!newName || newName === currentUser) return alert("Enter a different username.");
+            const checkDoc = await db.collection("users").doc(newName).get();
+            if(checkDoc.exists) return alert("Username taken.");
+
+            const oldData = usersDB[currentUser];
+            await db.collection("users").doc(newName).set(oldData);
+            await db.collection("users").doc(currentUser).delete();
+            currentUser = newName;
+            localStorage.setItem('techfix_user', currentUser);
+            alert("Username updated!");
+            openProfile();
+        }
+
+        async function updatePassword() {
+            const newPass = document.getElementById('newPasswordInput').value;
+            if(!newPass || newPass.length < 6) return alert("Min 6 characters.");
+            await auth.currentUser.updatePassword(newPass);
+            alert("Password updated!");
+            document.getElementById('newPasswordInput').value = '';
+        }
+
+        function filterFeed(type) {
+            currentFeedFilter = type;
+            renderThreads();
+        }
+
+        function openNewThread(editId = null) {
+            if(!currentUser) return openAuth();
+            if(getUser(currentUser).isLimited) return alert("Account restricted.");
+            const isEditing = editId !== null;
+            document.getElementById('threadModalTitle').innerText = isEditing ? 'Edit Thread' : 'Create Thread';
+            document.getElementById('editThreadId').value = isEditing ? editId : '';
+            if (isEditing) {
+                const t = threads.find(x => x.id === editId);
+                document.getElementById('postTitle').value = t.title;
+                document.getElementById('postContent').value = t.content;
+            } else {
+                document.getElementById('postTitle').value = '';
+                document.getElementById('postContent').value = '';
+            }
+            closeModals();
+            document.getElementById('threadModal').classList.add('active');
+        }
+
+        async function submitThread() {
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+            const editId = document.getElementById('editThreadId').value;
+            if(!title || !content) return alert('Fill out all fields.');
+
+            if (editId) {
+                await db.collection("threads").doc(editId).update({ title: title, content: content });
+            } else {
+                await db.collection("threads").add({
+                    title: title, content: content, author: currentUser,
+                    date: new Date().toLocaleDateString(), timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    reactors: []
+                });
+                await db.collection("users").doc(currentUser).update({
+                    posts: firebase.firestore.FieldValue.increment(1), points: firebase.firestore.FieldValue.increment(2)
+                });
+            }
+            closeModals();
+        }
+
+        async function toggleReaction(threadId) {
+            if(!currentUser) return openAuth();
+            const t = threads.find(x => x.id === threadId);
+            const ref = db.collection("threads").doc(threadId);
+            const hasReacted = t.reactors && t.reactors.includes(currentUser);
+
+            if(hasReacted) {
+                await ref.update({ reactors: firebase.firestore.FieldValue.arrayRemove(currentUser) });
+                if(t.author) await db.collection("users").doc(t.author).update({ reactions: firebase.firestore.FieldValue.increment(-1), points: firebase.firestore.FieldValue.increment(-1) });
+            } else {
+                await ref.update({ reactors: firebase.firestore.FieldValue.arrayUnion(currentUser) });
+                if(t.author) await db.collection("users").doc(t.author).update({ reactions: firebase.firestore.FieldValue.increment(1), points: firebase.firestore.FieldValue.increment(1) });
+            }
+        }
+
+        function renderThreads() {
+            const list = document.getElementById('thread-list');
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+            if(!list) return;
+            list.innerHTML = '';
+
+            let filtered = threads.filter(t => t.title.toLowerCase().includes(searchVal) || t.content.toLowerCase().includes(searchVal));
+            if(currentFeedFilter === 'mine' && currentUser) filtered = filtered.filter(t => t.author === currentUser);
+            if(currentFeedFilter === 'unanswered') filtered = filtered.filter(t => !t.reactors || t.reactors.length === 0);
+
+            if(filtered.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:gray; padding:20px;">No discussions found.</div>';
+                return;
+            }
+
+            filtered.forEach(t => {
+                const authorData = getUser(t.author);
+                const rConf = roleConfig[authorData.role] || roleConfig['new'];
+                const hasReacted = currentUser && t.reactors && t.reactors.includes(currentUser);
+                const isAuthor = currentUser === t.author;
+
+                // Process specific text tags: [spoiler]text[/spoiler] and [react]text[/react]
+                let parsedContent = t.content
+                    .replace(/\[spoiler\](.*?)\[\/spoiler\]/gi, (match, p1) => {
+                        return `<span class="inline-hidden" onclick="this.classList.toggle('revealed'); this.innerText=this.classList.contains('revealed')?'${p1}':'🔒 [Spoiler - Click to View]';">🔒 [Spoiler - Click to View]</span>`;
+                    })
+                    .replace(/\[react\](.*?)\[\/react\]/gi, (match, p1) => {
+                        if(hasReacted || isAuthor) {
+                            return `<span class="inline-hidden revealed">${p1}</span>`;
+                        } else {
+                            return `<span class="inline-hidden" onclick="alert('You must react to this post first to unlock this specific hidden text!')">🔒 [React to Unlock Text]</span>`;
+                        }
+                    })
+                    .replace(/\n/g, '<br>');
+
+                let editBtn = isAuthor ? `<button class="btn-edit" onclick="openNewThread('${t.id}')">Edit</button>` : '';
+                let reactCount = t.reactors ? t.reactors.length : 0;
+                let reactBtnClass = hasReacted ? 'btn-react reacted' : 'btn-react';
+
+                list.innerHTML += `
+                    <div class="card">
+                        <h3 class="card-title">${t.title}</h3>
+                        <div class="card-body">${parsedContent}</div>
+                        <div class="card-footer">
+                            <div>
+                                By <span class="clickable-username ${rConf.class}" onclick="showUserProfile('${t.author}', event)">@${t.author}</span>
+                                <span style="font-size:0.7rem; opacity:0.7;">(${rConf.title})</span>
+                            </div>
+                            <div>
+                                <button class="${reactBtnClass}" onclick="toggleReaction('${t.id}')">❤️ ${reactCount}</button>
+                                ${editBtn}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function sendShout() {
+            if(!currentUser) return openAuth();
+            const input = document.getElementById('shoutInput');
+            const msg = input.value.trim();
+            if(!msg) return;
+            await db.collection("shoutbox").add({
+                author: currentUser, message: msg, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            input.value = '';
+        }
+
+        function renderOnlineUsers() {
+            const list = document.getElementById('onlineUsersList');
+            const countBadge = document.getElementById('onlineCountBadge');
+            if(!list) return;
+            list.innerHTML = '';
+            let count = 0;
+            for(let u in usersDB) {
+                count++;
+                const rConf = roleConfig[usersDB[u].role] || roleConfig['new'];
+                list.innerHTML += `
+                    <div class="online-user-tag">
+                        <div class="status-dot"></div>
+                        <span class="clickable-username ${rConf.class}" onclick="showUserProfile('${u}', event)">@${u}</span>
+                    </div>
+                `;
+            }
+            countBadge.innerText = count;
+        }
+
+        function openAdminPanel() {
+            if(!currentUser || getUser(currentUser).role !== 'admin') return;
+            const list = document.getElementById('adminUserList');
+            list.innerHTML = '';
+            for(let user in usersDB) {
+                if(user === 'admin') continue;
+                const u = usersDB[user];
+                list.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); margin-bottom:5px; border-radius:6px;">
+                        <div><strong class="${(roleConfig[u.role]||roleConfig['new']).class}">@${user}</strong><br><small>Pts: ${u.points||0}</small></div>
+                        <select onchange="db.collection('users').doc('${user}').update({role: this.value})" style="background:var(--bg-color); color:white; border:1px solid var(--border); padding:4px; border-radius:4px;">
+                            <option value="new" ${u.role==='new'?'selected':''}>New</option>
+                            <option value="member" ${u.role==='member'?'selected':''}>Member</option>
+                            <option value="elite" ${u.role==='elite'?'selected':''}>Elite</option>
+                            <option value="contributor" ${u.role==='contributor'?'selected':''}>Contributor</option>
+                            <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+                        </select>
+                    </div>
+                `;
+            }
+            toggleSideNav();
+            document.getElementById('adminModal').classList.add('active');
+        }
+    </script>
+</body>
+</html>
