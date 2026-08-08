@@ -17,11 +17,11 @@
         }
 
         /* Role Colors */
-        .role-new { color: #4ade80 !important; }        /* Green */
-        .role-member { color: #60a5fa !important; }     /* Blue */
-        .role-elite { color: #a855f7 !important; }      /* Violet */
-        .role-contributor { color: #fbbf24 !important; }/* Gold */
-        .role-admin { color: #ef4444 !important; }      /* Red */
+        .role-new { color: #4ade80 !important; }        
+        .role-member { color: #60a5fa !important; }     
+        .role-elite { color: #a855f7 !important; }      
+        .role-contributor { color: #fbbf24 !important; }
+        .role-admin { color: #ef4444 !important; }      
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
@@ -67,7 +67,6 @@
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 8px; margin-top: 5px; }
         .btn-submit { background: var(--blue-main); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
 
-        /* Profile Modal Styles */
         .upc-header { text-align: center; padding: 20px 0; border-bottom: 1px solid var(--border); }
         .upc-avatar { width: 80px; height: 80px; border-radius: 50%; background: #333; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 2rem; overflow: hidden; background-size: cover; background-position: center; }
         .upc-avatar.clickable { cursor: pointer; border: 2px dashed var(--blue-main); }
@@ -76,7 +75,6 @@
         .upc-stats { display: flex; justify-content: space-around; font-size: 0.9rem; text-align: center; }
         .upc-stats b { display: block; font-size: 1.1rem; color: white; }
 
-        /* Admin Panel Styles */
         .admin-user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); margin-bottom: 5px; border-radius: 5px; }
         .admin-user-row select { background: var(--bg-color); color: white; border: 1px solid var(--border); padding: 4px; border-radius: 4px; }
         .btn-limit { background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
@@ -130,15 +128,22 @@
 
     <footer>Made By Ismael Manongdo</footer>
 
-    <!-- Auth Modals -->
+    <!-- UPDATED: Auth Modals (Now supports Email & Password) -->
     <div class="modal" id="authModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="authTitle">Log In</h2>
                 <button class="modal-close" onclick="closeModals()">&times;</button>
             </div>
-            <div class="form-group"><input type="text" id="authUser" placeholder="Username"></div>
+            <div class="form-group"><input type="email" id="authEmail" placeholder="Email Address"></div>
+            
+            <!-- This username field will only show when Registering -->
+            <div class="form-group" id="usernameGroup" style="display:none;">
+                <input type="text" id="authUser" placeholder="Display Name (Username)">
+            </div>
+            
             <div class="form-group"><input type="password" id="authPass" placeholder="Password"></div>
+            
             <button class="btn-submit" onclick="submitAuth()" id="authBtn">Log In</button>
             <div style="text-align:center; margin-top:10px; font-size:0.9rem;">
                 <a href="#" style="color:var(--blue-main);" onclick="toggleAuthMode()">Switch to Register/Login</a>
@@ -146,7 +151,6 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
     <div class="modal" id="profileModal" onclick="if(event.target===this)closeModals()">
         <div class="modal-content" style="max-width: 350px;">
             <div class="upc-header">
@@ -164,7 +168,6 @@
         </div>
     </div>
 
-    <!-- Thread Creator/Editor -->
     <div class="modal" id="threadModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -184,7 +187,6 @@
         </div>
     </div>
 
-    <!-- Admin Panel -->
     <div class="modal" id="adminModal">
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
@@ -195,14 +197,12 @@
         </div>
     </div>
 
-    <!-- FIREBASE SCRIPTS -->
+    <!-- FIREBASE SCRIPTS (ADDED AUTHENTICATION SCRIPT) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
     <script>
-        // ==========================================
-        // 1. FIREBASE CONFIGURATION (ADDED YOUR KEYS)
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDEAFqROiqVnWgugCLUad_IuCjsz5Wd38w",
             authDomain: "techfix-app-c8792.firebaseapp.com",
@@ -214,16 +214,15 @@
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth(); // Connects to the Authentication feature
 
-        // Global State
         let currentUser = localStorage.getItem('techfix_user') || null;
         let usersDB = {};
         let threads = [];
 
-        // Ensure root admin exists in Firestore database
         db.collection("users").doc("admin").get().then(doc => {
             if (!doc.exists) {
-                db.collection("users").doc("admin").set({ password: 'admin', role: 'admin', posts: 0, reactions: 0, points: 0, isLimited: false, avatar: '' });
+                db.collection("users").doc("admin").set({ email: "admin@techfix.com", role: 'admin', posts: 0, reactions: 0, points: 0, isLimited: false, avatar: '' });
             }
         });
 
@@ -241,11 +240,6 @@
             return levels.indexOf(role) >= levels.indexOf(requiredLevel);
         }
 
-        // ==========================================
-        // REAL-TIME DATABASE LISTENERS
-        // ==========================================
-        
-        // Listen for User Changes
         db.collection("users").onSnapshot((snapshot) => {
             usersDB = {};
             snapshot.forEach((doc) => {
@@ -256,7 +250,6 @@
             if(threads.length > 0) renderThreads();
         });
 
-        // Listen for Thread Changes
         db.collection("threads").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
             threads = [];
             snapshot.forEach((doc) => {
@@ -265,10 +258,6 @@
             renderThreads();
         });
 
-        // ==========================================
-        // UI & NAVIGATION
-        // ==========================================
-        
         function toggleSideNav() {
             document.getElementById('sideNav').classList.toggle('active');
             document.getElementById('sideNavOverlay').classList.toggle('active');
@@ -276,47 +265,83 @@
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
 
         // ==========================================
-        // AUTHENTICATION
+        // UPDATED AUTHENTICATION LOGIC
         // ==========================================
         let isLoginMode = true;
+        
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
             document.getElementById('authTitle').innerText = isLoginMode ? 'Log In' : 'Register';
             document.getElementById('authBtn').innerText = isLoginMode ? 'Log In' : 'Register Account';
+            
+            // Show the Username field ONLY when registering
+            document.getElementById('usernameGroup').style.display = isLoginMode ? 'none' : 'block';
         }
+        
         function openAuth() { closeModals(); document.getElementById('authModal').classList.add('active'); }
         
         async function submitAuth() {
-            const user = document.getElementById('authUser').value.trim().toLowerCase();
+            const email = document.getElementById('authEmail').value.trim();
             const pass = document.getElementById('authPass').value;
-            if(!user || !pass) return alert('Fill all fields');
+            const user = document.getElementById('authUser').value.trim().toLowerCase();
+
+            if(!email || !pass) return alert('Please enter your email and password.');
+            if(!isLoginMode && !user) return alert('Please choose a username to register.');
 
             try {
-                const userRef = db.collection("users").doc(user);
-                const doc = await userRef.get();
-
                 if (isLoginMode) {
-                    if(!doc.exists || doc.data().password !== pass) return alert('Invalid credentials');
+                    // 1. Log in securely with Firebase Auth
+                    await auth.signInWithEmailAndPassword(email, pass);
+                    
+                    // 2. Find the username connected to this email in our database
+                    const snapshot = await db.collection("users").where("email", "==", email).get();
+                    if(!snapshot.empty) {
+                        currentUser = snapshot.docs[0].id;
+                        localStorage.setItem('techfix_user', currentUser);
+                    } else {
+                        return alert("Error: Account exists but profile data is missing.");
+                    }
                 } else {
-                    if(doc.exists) return alert('Username taken');
-                    await userRef.set({ password: pass, role: 'new', posts: 0, reactions: 0, points: 0, isLimited: false, avatar: '' });
-                    alert('Registered successfully!');
+                    // 1. Make sure username isn't already taken
+                    const userRef = db.collection("users").doc(user);
+                    const doc = await userRef.get();
+                    if(doc.exists) return alert('That username is already taken. Please choose another.');
+
+                    // 2. Create the secure Firebase Account
+                    await auth.createUserWithEmailAndPassword(email, pass);
+                    
+                    // 3. Save their profile to the database
+                    await userRef.set({ 
+                        email: email, 
+                        role: 'new', 
+                        posts: 0, 
+                        reactions: 0, 
+                        points: 0, 
+                        isLimited: false, 
+                        avatar: '' 
+                    });
+                    
+                    currentUser = user; 
+                    localStorage.setItem('techfix_user', currentUser);
+                    alert('Account registered successfully!');
                 }
                 
-                currentUser = user; 
-                localStorage.setItem('techfix_user', currentUser);
+                document.getElementById('authEmail').value = '';
                 document.getElementById('authUser').value = '';
                 document.getElementById('authPass').value = '';
                 closeModals(); 
                 updateAuthUI();
                 renderThreads();
-            } catch(e) {
-                console.error("Auth error", e);
-                alert("Database error, check connection or rules.");
+                
+            } catch(error) {
+                console.error("Auth error", error);
+                // This alerts the exact reason (e.g. "Password should be at least 6 characters" or "Email already in use")
+                alert("Error: " + error.message); 
             }
         }
 
-        function logout() {
+        async function logout() {
+            await auth.signOut();
             currentUser = null; 
             localStorage.removeItem('techfix_user');
             closeModals(); 
@@ -344,9 +369,6 @@
             }
         }
 
-        // ==========================================
-        // PROFILES
-        // ==========================================
         function openProfile() {
             if(!currentUser) return;
             const u = getUser(currentUser);
@@ -384,22 +406,16 @@
         async function handleAvatarUpload(e) {
             const file = e.target.files[0];
             if(!file) return;
-            
             if(file.size > 1048576) return alert("Image too large (Max 1MB).");
 
             const reader = new FileReader();
             reader.onload = async function(event) {
-                await db.collection("users").doc(currentUser).update({
-                    avatar: event.target.result
-                });
+                await db.collection("users").doc(currentUser).update({ avatar: event.target.result });
                 openProfile(); 
             };
             reader.readAsDataURL(file);
         }
 
-        // ==========================================
-        // THREADS & REACTIONS
-        // ==========================================
         function openNewThread(editId = null) {
             if(!currentUser) return openAuth();
             if(getUser(currentUser).isLimited) return alert("Your account is restricted from posting.");
@@ -440,26 +456,17 @@
             try {
                 if (editId) {
                     await db.collection("threads").doc(editId).update({
-                        title: title,
-                        content: content,
-                        isSpoiler: isSpoiler,
-                        requireReaction: requireReaction
+                        title: title, content: content, isSpoiler: isSpoiler, requireReaction: requireReaction
                     });
                 } else {
                     await db.collection("threads").add({
-                        title: title, 
-                        content: content, 
-                        author: currentUser, 
-                        date: new Date().toLocaleDateString(), 
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        reactors: [],
-                        isSpoiler: isSpoiler, 
-                        requireReaction: requireReaction
+                        title: title, content: content, author: currentUser, 
+                        date: new Date().toLocaleDateString(), timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        reactors: [], isSpoiler: isSpoiler, requireReaction: requireReaction
                     });
                     
                     await db.collection("users").doc(currentUser).update({
-                        posts: firebase.firestore.FieldValue.increment(1),
-                        points: firebase.firestore.FieldValue.increment(2)
+                        posts: firebase.firestore.FieldValue.increment(1), points: firebase.firestore.FieldValue.increment(2)
                     });
                 }
                 closeModals();
@@ -479,23 +486,15 @@
                 if(hasReacted) {
                     await threadRef.update({ reactors: firebase.firestore.FieldValue.arrayRemove(currentUser) });
                     if(t.author) {
-                        await db.collection("users").doc(t.author).update({
-                            reactions: firebase.firestore.FieldValue.increment(-1),
-                            points: firebase.firestore.FieldValue.increment(-1)
-                        });
+                        await db.collection("users").doc(t.author).update({ reactions: firebase.firestore.FieldValue.increment(-1), points: firebase.firestore.FieldValue.increment(-1) });
                     }
                 } else {
                     await threadRef.update({ reactors: firebase.firestore.FieldValue.arrayUnion(currentUser) });
                     if(t.author) {
-                        await db.collection("users").doc(t.author).update({
-                            reactions: firebase.firestore.FieldValue.increment(1),
-                            points: firebase.firestore.FieldValue.increment(1)
-                        });
+                        await db.collection("users").doc(t.author).update({ reactions: firebase.firestore.FieldValue.increment(1), points: firebase.firestore.FieldValue.increment(1) });
                     }
                 }
-            } catch(e) {
-                console.error("Error reacting", e);
-            }
+            } catch(e) { console.error("Error reacting", e); }
         }
 
         function renderThreads() {
@@ -519,18 +518,12 @@
                 let blockReason = "";
 
                 if(t.isSpoiler && !hasPerms(currentRole, 'member') && !isAuthor) {
-                    canView = false;
-                    blockReason = "⚠️ Spoiler Content: You must be a Member or higher to view.";
+                    canView = false; blockReason = "⚠️ Spoiler Content: You must be a Member or higher to view.";
                 }
-                
                 if(t.requireReaction && !hasReacted && !isAuthor && canView) {
-                    canView = false;
-                    blockReason = "🔒 Hidden Content: You must react to this post to view.";
+                    canView = false; blockReason = "🔒 Hidden Content: You must react to this post to view.";
                 }
-
-                if(!canView) {
-                    displayContent = `<div class="hidden-block">${blockReason}</div>`;
-                }
+                if(!canView) { displayContent = `<div class="hidden-block">${blockReason}</div>`; }
 
                 let editBtn = '';
                 if(isAuthor && hasPerms(currentRole, 'member')) {
@@ -550,9 +543,7 @@
                                 <span style="font-size:0.7rem; opacity:0.7;">(${rConf.title})</span>
                             </div>
                             <div>
-                                <button class="${reactBtnClass}" onclick="toggleReaction('${t.id}')">
-                                    ❤️ ${reactCount}
-                                </button>
+                                <button class="${reactBtnClass}" onclick="toggleReaction('${t.id}')">❤️ ${reactCount}</button>
                                 ${editBtn}
                             </div>
                         </div>
@@ -561,9 +552,6 @@
             });
         }
 
-        // ==========================================
-        // ADMIN PANEL
-        // ==========================================
         function openAdminPanel() {
             if(!currentUser || getUser(currentUser).role !== 'admin') return;
             const list = document.getElementById('adminUserList');
@@ -597,14 +585,11 @@
             document.getElementById('adminModal').classList.add('active');
         }
 
-        async function changeRole(username, newRole) {
-            await db.collection("users").doc(username).update({ role: newRole });
-        }
-
+        async function changeRole(username, newRole) { await db.collection("users").doc(username).update({ role: newRole }); }
         async function toggleLimit(username) {
             const currentStatus = usersDB[username].isLimited;
             await db.collection("users").doc(username).update({ isLimited: !currentStatus });
         }
     </script>
 </body>
-</html>
+    </html>
